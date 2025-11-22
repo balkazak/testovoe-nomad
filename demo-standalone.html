@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Демо - Виджет пользователей (Standalone)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .demo-header {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .demo-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    #users-widget-container {
+      margin-top: 20px;
+    }
+    .instructions {
+      background: #e7f3ff;
+      padding: 16px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      border-left: 4px solid #007bff;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-header">
+    <h1>Демонстрация виджета пользователей</h1>
+    <p>Это пример подключения виджета пользователей на обычную HTML-страницу.</p>
+    <div class="instructions">
+      <strong>Инструкция:</strong> Перед использованием убедитесь, что виджет собран командой <code>npm run build:widget</code>
+      и файл <code>dist-widget/users-widget.umd.js</code> существует.
+    </div>
+  </div>
+
+  <div class="demo-content">
+    <h2>Виджет встроен ниже:</h2>
+    <div id="users-widget-container"></div>
+  </div>
+
+  <script src="./dist-widget/users-widget.umd.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', function() {
+      if (window.UsersWidget) {
+        window.UsersWidget.init('#users-widget-container');
+      } else {
+        const container = document.getElementById('users-widget-container');
+        if (container) {
+          container.innerHTML = '<p style="color: red;">Ошибка: Виджет не загружен. Убедитесь, что файл dist-widget/users-widget.umd.js существует.</p>';
+        }
+        console.error('UsersWidget not loaded');
+      }
+    });
+  </script>
+</body>
+</html>
+

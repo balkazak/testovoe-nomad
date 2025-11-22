@@ -1,0 +1,260 @@
+<template>
+  <div class="users-page">
+    <div class="users-page__header">
+      <h1>Пользователи</h1>
+      <AppButton :disabled="loading" @click="handleRefresh">
+        Обновить
+      </AppButton>
+    </div>
+
+    <div class="users-page__search">
+      <AppInput
+        v-model="searchQuery"
+        placeholder="Поиск по имени или email..."
+        @update:modelValue="store.setSearchQuery"
+      />
+    </div>
+
+    <ErrorMessage :message="store.error" />
+
+    <LoadingSpinner v-if="loading && !store.filteredUsers.length" message="Загрузка пользователей..." />
+
+    <div v-else-if="store.filteredUsers.length" class="users-page__content">
+      <UserTable :users="store.filteredUsers" @select="handleUserSelect" />
+    </div>
+
+    <div v-else class="users-page__empty">
+      <p>Пользователи не найдены</p>
+    </div>
+
+    <AppModal v-model="showUserDetail" @update:modelValue="handleModalClose">
+      <template #title>Детали пользователя</template>
+      <div v-if="selectedUser" class="user-detail">
+        <div class="user-detail__field">
+          <strong>Имя:</strong> {{ selectedUser.name }}
+        </div>
+        <div class="user-detail__field">
+          <strong>Email:</strong> {{ selectedUser.email }}
+        </div>
+        <div class="user-detail__field">
+          <strong>Телефон:</strong> {{ selectedUser.phone }}
+        </div>
+        <div class="user-detail__field">
+          <strong>Сайт:</strong>
+          <a :href="`http://${selectedUser.website}`" target="_blank">
+            {{ selectedUser.website }}
+          </a>
+        </div>
+        <div class="user-detail__field">
+          <strong>Адрес:</strong>
+          {{ selectedUser.address.street }}, {{ selectedUser.address.suite }},
+          {{ selectedUser.address.city }}, {{ selectedUser.address.zipcode }}
+        </div>
+        <div class="user-detail__field">
+          <strong>Компания:</strong> {{ selectedUser.company.name }}
+        </div>
+      </div>
+      <template #footer>
+        <AppButton @click="handleEditClick">Редактировать</AppButton>
+        <AppButton @click="showUserDetail = false">Закрыть</AppButton>
+      </template>
+    </AppModal>
+
+    <AppModal v-model="showEditForm" @update:modelValue="handleEditModalClose">
+      <template #title>Редактировать пользователя</template>
+      <form v-if="selectedUser" @submit.prevent="handleSave">
+        <AppInput
+          v-model="editForm.name"
+          label="Имя"
+          required
+          :error="errors.name"
+        />
+        <AppInput
+          v-model="editForm.email"
+          label="Email"
+          type="email"
+          required
+          :error="errors.email"
+        />
+        <AppInput
+          v-model="editForm.phone"
+          label="Телефон"
+          required
+          :error="errors.phone"
+        />
+      </form>
+      <template #footer>
+        <AppButton @click="handleSave" :disabled="loading">Сохранить</AppButton>
+        <AppButton @click="showEditForm = false">Отмена</AppButton>
+      </template>
+    </AppModal>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useUsersStore } from '@/store/users'
+import AppButton from '@/components/AppButton.vue'
+import AppInput from '@/components/AppInput.vue'
+import AppModal from '@/components/AppModal.vue'
+import UserTable from '@/components/UserTable.vue'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import ErrorMessage from '@/components/ErrorMessage.vue'
+import type { User, UserFormData } from '@/types/user'
+
+const store = useUsersStore()
+const searchQuery = ref('')
+const showUserDetail = ref(false)
+const showEditForm = ref(false)
+const selectedUser = ref<User | null>(null)
+const editForm = ref<UserFormData>({
+  name: '',
+  email: '',
+  phone: ''
+})
+const errors = ref<Partial<Record<keyof UserFormData, string>>>({})
+
+const loading = computed(() => store.loading)
+
+onMounted(() => {
+  store.loadUsers()
+})
+
+function handleRefresh() {
+  store.loadUsers()
+}
+
+function handleUserSelect(user: User) {
+  selectedUser.value = user
+  showUserDetail.value = true
+}
+
+function handleModalClose() {
+  showUserDetail.value = false
+  if (!showEditForm.value) {
+    selectedUser.value = null
+  }
+}
+
+function handleEditClick() {
+  if (selectedUser.value) {
+    editForm.value = {
+      name: selectedUser.value.name,
+      email: selectedUser.value.email,
+      phone: selectedUser.value.phone
+    }
+    errors.value = {}
+    showUserDetail.value = false
+    showEditForm.value = true
+  }
+}
+
+function handleEditModalClose() {
+  showEditForm.value = false
+  if (!showUserDetail.value) {
+    selectedUser.value = null
+  }
+}
+
+function validateForm(): boolean {
+  errors.value = {}
+
+  if (!editForm.value.name.trim()) {
+    errors.value.name = 'Имя обязательно'
+  }
+
+  if (!editForm.value.email.trim()) {
+    errors.value.email = 'Email обязателен'
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editForm.value.email)) {
+    errors.value.email = 'Некорректный email'
+  }
+
+  if (!editForm.value.phone.trim()) {
+    errors.value.phone = 'Телефон обязателен'
+  }
+
+  return Object.keys(errors.value).length === 0
+}
+
+async function handleSave() {
+  if (!validateForm() || !selectedUser.value) {
+    return
+  }
+
+  try {
+    await store.updateUser(selectedUser.value.id, editForm.value)
+    showEditForm.value = false
+    selectedUser.value = null
+  } catch (err) {
+    console.error('Failed to update user:', err)
+  }
+}
+</script>
+
+<style scoped>
+.users-page {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.users-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.users-page__header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.users-page__search {
+  margin-bottom: 24px;
+}
+
+.users-page__content {
+  margin-top: 24px;
+}
+
+.users-page__empty {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.user-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.user-detail__field {
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.user-detail__field:last-child {
+  border-bottom: none;
+}
+
+.user-detail__field strong {
+  display: inline-block;
+  min-width: 100px;
+  color: #333;
+}
+
+@media (max-width: 768px) {
+  .users-page {
+    padding: 16px;
+  }
+
+  .users-page__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+}
+</style>
+

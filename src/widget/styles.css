@@ -1,0 +1,10 @@
+.users-widget * {
+  box-sizing: border-box;
+}
+
+.users-widget {
+  all: initial;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  display: block;
+}
+

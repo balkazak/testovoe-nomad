@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Демо - Виджет пользователей</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .demo-header {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .demo-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    #users-widget-container {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-header">
+    <h1>Демонстрация виджета пользователей</h1>
+    <p>Это пример подключения виджета пользователей на обычную HTML-страницу.</p>
+  </div>
+
+  <div class="demo-content">
+    <h2>Виджет встроен ниже:</h2>
+    <div id="users-widget-container"></div>
+  </div>
+
+  <script src="../dist-widget/users-widget.umd.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', function() {
+      if (window.UsersWidget) {
+        window.UsersWidget.init('#users-widget-container');
+      } else {
+        console.error('UsersWidget not loaded');
+      }
+    });
+  </script>
+</body>
+</html>
+
